@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Greater NY Live Transit</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.1.14/dist.min.js"></script>
+</head>
+<body>
+  <div id="map"></div>
+  <aside id="panel">
+    <h1>Greater NY Live Transit</h1>
+    <p class="sub">Trains, buses and ferries commuting to Manhattan</p>
+    <div class="filters" role="group" aria-label="Direction">
+      <button data-dir="all" class="active">All</button>
+      <button data-dir="inbound">→ Manhattan</button>
+      <button data-dir="outbound">Leaving</button>
+    </div>
+    <table id="counts">
+      <thead><tr><th></th><th>In</th><th>Out</th><th>Total</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p id="status" class="status">Loading…</p>
+    <!-- Required by the MTA and NJ TRANSIT data feed terms. -->
+    <p class="disclaimer">
+      Data obtained from MTA and NJ TRANSIT servers and redistributed by this site.
+      Not affiliated with, licensed, or endorsed by the MTA or NJ TRANSIT.
+      Information may not be real time and may be inaccurate or incomplete; positions between updates are estimated.
+    </p>
+  </aside>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

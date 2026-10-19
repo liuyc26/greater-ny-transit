@@ -1,0 +1,51 @@
+:root {
+  --bg: #0e1116;
+  --panel: rgba(18, 22, 30, 0.88);
+  --text: #e8ecf2;
+  --muted: #8b95a5;
+  --accent: #4fd1c5;
+  --border: rgba(255, 255, 255, 0.08);
+  --bad: #f56565;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+#map { position: absolute; inset: 0; }
+
+#panel {
+  position: absolute; z-index: 10; /* above the map's WebGL canvases */
+  top: 16px; left: 16px; width: 300px; max-width: calc(100% - 32px);
+  padding: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  backdrop-filter: blur(8px);
+}
+h1 { margin: 0; font-size: 17px; letter-spacing: 0.2px; }
+.sub { margin: 4px 0 12px; color: var(--muted); font-size: 12px; }
+
+.filters { display: flex; gap: 4px; margin-bottom: 12px; }
+.filters button {
+  flex: 1; padding: 6px 4px; border: 1px solid var(--border); border-radius: 6px;
+  background: transparent; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer;
+}
+.filters button.active { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+
+#counts { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+#counts th { color: var(--muted); font-weight: 500; font-size: 11px; text-align: right; padding: 2px 4px; }
+#counts td { padding: 3px 4px; text-align: right; border-top: 1px solid var(--border); }
+#counts td:first-child { text-align: left; }
+#counts .swatch { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+#counts tr.error td:first-child::after { content: " ⚠"; color: var(--bad); }
+#counts tbody tr { cursor: pointer; }
+#counts tbody tr.off { opacity: 0.35; }
+
+.status { margin: 10px 0 0; color: var(--muted); font-size: 11px; }
+.status.error { color: var(--bad); }
+.disclaimer { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--border);
+  color: var(--muted); font-size: 10px; line-height: 1.35; }
+
+.deck-tooltip { font-size: 12px !important; border-radius: 8px; max-width: 260px; }
+
+@media (max-width: 600px) {
+  #panel { top: auto; bottom: 16px; left: 16px; right: 16px; width: auto; padding: 12px; }
+  .sub { display: none; }
+}

@@ -1,0 +1,4 @@
+-r requirements.txt
+uvicorn[standard]==0.34.0
+shapely==2.0.6
+pytest==8.3.4
