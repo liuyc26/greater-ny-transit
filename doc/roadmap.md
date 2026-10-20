@@ -28,11 +28,10 @@
 
 - **NJT API behavior can change without notice** (stale bus snapshots, trip_id schemes). Feed health shows
   in the panel; check `skipped_trips` in API responses if counts drop.
-- **NJT bus schedule covers only through today**: a missed daily build breaks bus matching the next day.
+- **NJT indexes cover only today and tomorrow**: if the daily build misses two days, rail ETAs and bus matching stop.
 - **RailData `getVehicleData` limit is undocumented.** Watch for errors at 10 s polling.
 - **Vercel Python limits** unverified until deploy.
 - **AIS ferries** (NY Waterway, Seastreak, SI Ferry) need a persistent websocket. Options: an Oracle Cloud
   Always Free VM running only the AIS collector, or skip.
 - **PATH estimation** will jitter near stations.
-- **71 of 360 NJT bus gaps** weren't road-filled (router length disagreed with the shape), so a few
-  straight segments remain.
+- **Bus shapes** come from the public zip, which has no long straight gaps today; road fill remains as a safeguard.

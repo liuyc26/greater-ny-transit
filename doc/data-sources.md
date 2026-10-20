@@ -9,7 +9,7 @@ All findings verified against live feeds on 2026-10-18.
 | LIRR | `https://rrgtfsfeeds.s3.amazonaws.com/gtfslirr.zip` | GTFS-RT `https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/lirr%2Fgtfs-lirr` | no | `trip_id` = static `trip_id` |
 | Metro-North | `https://rrgtfsfeeds.s3.amazonaws.com/gtfsmnr.zip` | GTFS-RT `https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/mnr%2Fgtfs-mnr` | no | `trip_id` = static `trip_short_name` (train number) |
 | NJ Transit Rail | `https://www.njtransit.com/rail_data.zip` (public) | `POST https://raildata.njtransit.com/api/TrainData/getVehicleData` (JSON) | yes | `ID` = static `block_id` (train number) |
-| NJ Transit Bus | `POST https://pcsdata.njtransit.com/api/GTFS/getGTFS` | GTFS-RT `POST https://pcsdata.njtransit.com/api/GTFS/getVehiclePositions` | yes | `route_id` + `start_time` = static `route_short_name` + first departure |
+| NJ Transit Bus | `https://www.njtransit.com/bus_data.zip` (public) | GTFS-RT `POST https://pcsdata.njtransit.com/api/GTFS/getVehiclePositions` | yes | `route_id` + `start_time` = static `route_short_name` + first departure |
 
 Also used at build time: Manhattan boundary from NYC Open Data
 (`https://data.cityofnewyork.us/resource/gthc-hcne.geojson`, cached in `data/manhattan.geojson`), and
@@ -51,8 +51,12 @@ road geometry from the OSRM public server (`router.project-osrm.org`, cached in 
   trip_ids are 1…109,441, so collisions look like matches; only 5 of 526 were on the right route.) Trips
   are matched by route number + start time against today's service: ~87% unique, the rest pick the first
   qualifying candidate.
-- The API zip's calendar covers dates **only through today**, so the build must run each morning before service.
-- Express shapes skip highway stretches; the build fills them with road geometry (see architecture.md).
+- **Use the public `bus_data.zip`, not the API's `getGTFS`.** The API zip is a fixed two-week window (e.g. Oct 4–18)
+  that can lapse before the next one is posted; on 2026-10-19 it still ended the day before. The public zip covers
+  ~6 months (Sep 2026–Mar 2027), needs no login, and has detailed shapes. The API zip's express shapes skipped
+  highway stretches (one 17 km segment from the Lincoln Tunnel to Union).
+- With the public zip, ~98% of live buses on Manhattan routes match; ~97% sit within 500 m of their shape
+  (median 6 m). Buses on local routes (~600 at weekday peak) are skipped by design.
 - Vehicle label is the bus fleet number. Trip updates carry delays but no times (~900 KB per call; not fetched yet).
 - Reported limit ~40,000 calls/day (from a third-party client library; NJT's agreement caps all use at 100,000/day).
 

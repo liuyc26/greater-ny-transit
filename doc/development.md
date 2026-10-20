@@ -23,9 +23,12 @@ schedule; without credentials, build the other agencies by name (below).
 ```
 
 - Downloads are cached in `data/raw/` for 20 hours.
-- The NJT bus schedule comes from the NJT API (`getGTFS`), one call per build.
-- The first build with new bus shapes queries OSRM for road geometry at 1 request/second (~3 minutes for
-  ~160 gaps). Results go to `data/road_fill_cache.json`; commit that file.
+- All schedules are public downloads; only the realtime NJT APIs need credentials.
+- If bus shapes ever have long straight gaps, the build queries OSRM for road geometry at 1 request/second.
+  Results go to `data/road_fill_cache.json`; commit that file.
+- If an agency's schedule has no service today, the build re-downloads it, and if it still has none it
+  fails for that agency and keeps its previous data rather than writing an empty index.
+- Building a subset of agencies merges into the existing map files.
 - NJT rail and bus indexes only cover **today and tomorrow**, so rebuild daily. A build made on a Sunday
   only includes Sunday's bus routes.
 

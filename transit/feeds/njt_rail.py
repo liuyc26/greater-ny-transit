@@ -81,8 +81,8 @@ class NjtRailAdapter:
             if now - modified > MAX_POSITION_AGE_S:
                 continue
             train = str(r.get("ID", "")).strip()
-            match = self.index.get(train)
-            if match is None:
+            match = self.index.pick(train, lon, lat)
+            if match is None or match[1] is None:
                 skipped += 1
                 continue
             route_id, direction, headsign, shape_id, static_trip_id = match[:5]

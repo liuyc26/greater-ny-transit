@@ -63,7 +63,13 @@ came from.
 ```
 
 `number` is the public train or route number. `schedule` (NJT rail only) is `{stop_id: seconds after
-service-day midnight}`. The realtime key differs per agency; see [data-sources.md](data-sources.md).
+service-day midnight}`.
+
+Some keys are ambiguous: an NJT bus route + start time can match a local and an express variant, or a
+trip that never reaches Manhattan. For those, the index also stores `alternatives` (one candidate per
+distinct shape; direction `null` = not a Manhattan trip) and `shape_samples` (40-point outlines).
+`TripIndex.pick` chooses the candidate whose shape is nearest the vehicle, and vehicles whose best
+candidate isn't a Manhattan trip are skipped. The realtime key differs per agency; see [data-sources.md](data-sources.md).
 Vehicles whose trips aren't in the index (they never reach Manhattan) are skipped and counted in
 `FeedStatus.skipped_trips`.
 
@@ -72,6 +78,8 @@ Vehicles whose trips aren't in the index (they never reach Manhattan) are skippe
 `scripts/build_static.py` marks a stop as **core** if it's inside the Manhattan borough polygon
 (NYC Open Data, buffered 150 m so shoreline piers count) or within 300 m of a transfer hub
 (Hoboken, Long Island City, Weehawken, Exchange Place, Newport; Atlantic Terminal is an off-by-default flag).
+Hubs count only for rail (`Agency.use_hubs`): trains to Hoboken connect to PATH and ferries, but many local
+buses pass those hubs without going to Manhattan, so buses must stop in Manhattan itself.
 
 A trip qualifies if it serves any core stop. Its direction (`filtering.classify_direction`):
 `inbound` ends at a core stop, `outbound` starts at one, `through` otherwise.
@@ -87,8 +95,9 @@ filter, and writes:
   id → geometry map.
 - `transit/data/<agency>.json`: the trip index.
 
-`road_fill.py` fixes sparse shapes. NJT express-bus shapes skip highway stretches (one segment from the
-Lincoln Tunnel to Union, 17 km). Gaps over 1.5 km are filled with the driving route from the public OSRM
+`road_fill.py` fixes sparse shapes, enabled for NJT bus. The NJT API's bus shapes skipped highway stretches
+(one segment from the Lincoln Tunnel to Union, 17 km); the public zip now used doesn't, so it currently finds
+no gaps but stays as a safeguard. Gaps over 1.5 km are filled with the driving route from the public OSRM
 server, accepted only if its length is within 20% of the shape's own `shape_dist_traveled`. Results are
 cached in `data/road_fill_cache.json` (commit it) so builds only query new gaps.
 
@@ -101,6 +110,13 @@ No build step: plain ES modules, with MapLibre GL and deck.gl from unpkg and the
   per-agency toggles, feed health). It also limits the map to the service area: the minimum zoom is the one
   where every route fits on screen, recomputed on resize.
 - `track.js`: the motion model (below).
+- Every 5 minutes it checks `data/meta.json` and reloads the map data if it was rebuilt, since shape ids in
+  API responses always refer to the current build.
+- Hovering a vehicle highlights its trip's shape, or nothing if the vehicle isn't on that shape (the
+  feed's trip is then probably wrong).
+- Light/dark theme toggle: follows the system setting until the user picks one (remembered in
+  `localStorage`). Each theme has its own OpenFreeMap basemap (`dark` / `positron`) and map-layer colors
+  (`THEMES` in `app.js`); panel colors are CSS variables in `style.css`.
 - `window.__transit` and `window.__map` are exposed for debugging and browser tests.
 
 ### Motion model (`track.js`)

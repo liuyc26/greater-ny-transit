@@ -10,6 +10,7 @@ def make_adapter() -> GtfsRtAdapter:
     index = TripIndex.__new__(TripIndex)
     index.routes = {"1": {"name": "Hudson", "color": "#009B3A"}}
     index.trips = {"1234": ["1", "inbound", "Grand Central", "shape1", "static-trip-1234", "1234"]}
+    index.alternatives, index.shape_samples = {}, {}
     adapter.__dict__["index"] = index  # bypass loading transit/data/mnr.json
     return adapter
 

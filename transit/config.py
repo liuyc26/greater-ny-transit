@@ -56,6 +56,10 @@ class Agency:
     index_schedule: bool = False
     # Fill long straight gaps in shapes with OSRM road geometry (sparse express-bus shapes).
     road_fill: bool = False
+    # Count trips to transfer hubs (Hoboken, Exchange Place, ...) as Manhattan commutes. Right for
+    # rail (trains to Hoboken connect to PATH/ferries); wrong for buses, where many local routes
+    # pass through those hubs without going to Manhattan.
+    use_hubs: bool = True
 
 
 AGENCIES = {
@@ -89,14 +93,16 @@ AGENCIES = {
     "njt_bus": Agency(
         id="njt_bus",
         name="NJ Transit Bus",
-        # From the API: its route numbers and service match the realtime feed. (Neither zip's
-        # trip_ids match realtime trip_ids, so trips are matched by route + start time.)
-        static_url="njt:bus",
+        # The public zip covers ~6 months of service. (The API's getGTFS, "njt:bus", is a fixed
+        # two-week window that can lapse before the next is posted.) Neither zip's trip_ids match
+        # realtime trip_ids, so trips are matched by route + start time.
+        static_url="https://www.njtransit.com/bus_data.zip",
         realtime_url=None,  # GTFS-RT via authenticated POST, see transit/feeds/njt_bus.py
         rt_trip_key=ROUTE_START_KEY,
         number_field="route_short_name",
         current_service_only=True,
         publish_stops=False,
-        road_fill=True,  # express shapes skip highway stretches (e.g. Lincoln Tunnel -> Union in one segment)
+        road_fill=True,  # safeguard: the API's bus shapes skipped highway stretches
+        use_hubs=False,  # buses must actually enter Manhattan (excludes local Hudson County routes)
     ),
 }

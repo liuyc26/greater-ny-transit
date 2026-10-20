@@ -37,8 +37,8 @@ run out within hours. Before deploying:
    - commit changed `public/data/*`, `transit/data/*` and `data/road_fill_cache.json`;
    - the push triggers a Vercel redeploy.
 
-   The NJT bus schedule from the API only covers dates through the current day, so a missed build means
-   bus matching fails the next day. Monitor the workflow.
+   NJT rail and bus indexes cover only today and tomorrow, so if the build fails two days in a row,
+   NJT rail ETAs and bus matching stop. Monitor the workflow.
 5. **Check limits:** Vercel Hobby function size, duration and invocation limits weren't verified. The
    function is small (~1 MB of indexes) and does one outbound request per call.
 

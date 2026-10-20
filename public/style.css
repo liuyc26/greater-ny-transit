@@ -1,11 +1,29 @@
+/* Dark is the default; app.js sets data-theme on <html> from the toggle or the system setting. */
 :root {
   --bg: #0e1116;
   --panel: rgba(18, 22, 30, 0.88);
   --text: #e8ecf2;
   --muted: #8b95a5;
   --accent: #4fd1c5;
+  --on-accent: #0e1116;
   --border: rgba(255, 255, 255, 0.08);
   --bad: #f56565;
+  --tooltip-bg: #1d232d;
+  --tooltip-text: #e8ecf2;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #f4f5f7;
+  --panel: rgba(255, 255, 255, 0.92);
+  --text: #1a1f29;
+  --muted: #5d6675;
+  --accent: #0f8a80;
+  --on-accent: #ffffff;
+  --border: rgba(15, 23, 42, 0.12);
+  --bad: #c53030;
+  --tooltip-bg: #ffffff;
+  --tooltip-text: #1a1f29;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -19,7 +37,15 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
   padding: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
   backdrop-filter: blur(8px);
 }
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 h1 { margin: 0; font-size: 17px; letter-spacing: 0.2px; }
+#theme-toggle {
+  flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -4px -4px 0 0;
+  border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer;
+}
+#theme-toggle:hover { color: var(--text); }
+#theme-toggle svg { width: 16px; height: 16px; }
+:root[data-theme="light"] .icon-sun, :root:not([data-theme="light"]) .icon-moon { display: none; }
 .sub { margin: 4px 0 12px; color: var(--muted); font-size: 12px; }
 
 .filters { display: flex; gap: 4px; margin-bottom: 12px; }
@@ -27,7 +53,7 @@ h1 { margin: 0; font-size: 17px; letter-spacing: 0.2px; }
   flex: 1; padding: 6px 4px; border: 1px solid var(--border); border-radius: 6px;
   background: transparent; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer;
 }
-.filters button.active { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+.filters button.active { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
 
 #counts { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 #counts th { color: var(--muted); font-weight: 500; font-size: 11px; text-align: right; padding: 2px 4px; }
@@ -43,7 +69,11 @@ h1 { margin: 0; font-size: 17px; letter-spacing: 0.2px; }
 .disclaimer { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--border);
   color: var(--muted); font-size: 10px; line-height: 1.35; }
 
-.deck-tooltip { font-size: 12px !important; border-radius: 8px; max-width: 260px; }
+.deck-tooltip {
+  font-size: 12px !important; border-radius: 8px; max-width: 260px;
+  background: var(--tooltip-bg) !important; color: var(--tooltip-text) !important;
+  border: 1px solid var(--border); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
 
 @media (max-width: 600px) {
   #panel { top: auto; bottom: 16px; left: 16px; right: 16px; width: auto; padding: 12px; }

@@ -1,22 +1,6 @@
 {
-  "built_at": 1792376119,
+  "built_at": 1792418908,
   "agencies": {
-    "njt_bus": {
-      "name": "NJ Transit Bus",
-      "trips_total": 7589,
-      "trips_qualifying": 2859,
-      "directions": {
-        "inbound": 1269,
-        "outbound": 1288,
-        "through": 302
-      },
-      "routes": 56,
-      "stops": 4271,
-      "shapes": 187,
-      "distinct_shapes": 186,
-      "index_key_conflicts": 183,
-      "trips_missing_shape": 0
-    },
     "lirr": {
       "name": "Long Island Rail Road",
       "trips_total": 2291,
@@ -29,8 +13,9 @@
       "stops": 117,
       "shapes": 76,
       "distinct_shapes": 76,
-      "index_key_conflicts": 0,
-      "trips_missing_shape": 0
+      "ambiguous_keys": 0,
+      "trips_missing_shape": 0,
+      "built_at": 1792418881
     },
     "mnr": {
       "name": "Metro-North Railroad",
@@ -44,23 +29,41 @@
       "stops": 106,
       "shapes": 10,
       "distinct_shapes": 10,
-      "index_key_conflicts": 0,
-      "trips_missing_shape": 0
+      "ambiguous_keys": 0,
+      "trips_missing_shape": 0,
+      "built_at": 1792418884
     },
     "njt_rail": {
       "name": "NJ Transit Rail",
-      "trips_total": 1264,
-      "trips_qualifying": 884,
+      "trips_total": 771,
+      "trips_qualifying": 575,
       "directions": {
-        "inbound": 437,
-        "outbound": 447
+        "inbound": 286,
+        "outbound": 289
       },
       "routes": 9,
       "stops": 134,
-      "shapes": 884,
-      "distinct_shapes": 98,
-      "index_key_conflicts": 0,
-      "trips_missing_shape": 0
+      "shapes": 575,
+      "distinct_shapes": 92,
+      "ambiguous_keys": 0,
+      "trips_missing_shape": 0,
+      "built_at": 1792418888
+    },
+    "njt_bus": {
+      "name": "NJ Transit Bus",
+      "trips_total": 16083,
+      "trips_qualifying": 5709,
+      "directions": {
+        "inbound": 2955,
+        "outbound": 2754
+      },
+      "routes": 76,
+      "stops": 4999,
+      "shapes": 766,
+      "distinct_shapes": 523,
+      "ambiguous_keys": 539,
+      "trips_missing_shape": 0,
+      "built_at": 1792418908
     }
   }
 }

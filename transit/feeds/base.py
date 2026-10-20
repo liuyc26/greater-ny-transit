@@ -1,6 +1,7 @@
 """Feed adapters: each one turns an agency's realtime source into normalized Vehicles."""
 
 import json
+import math
 import time
 from dataclasses import dataclass, field
 from functools import cached_property
@@ -26,16 +27,50 @@ class FeedAdapter(Protocol):
 class TripIndex:
     """Realtime trip key -> [route_id, direction, headsign, shape_id, static trip_id, number,
     (schedule)], built by scripts/build_static.py. number is the public train/route number;
-    schedule (optional) is {stop_id: arrival seconds after service-day midnight}."""
+    schedule (optional) is {stop_id: arrival seconds after service-day midnight}.
+
+    Ambiguous keys (several trips share one key, e.g. NJT bus route + start time) also have
+    `alternatives` (other candidates, one per distinct shape; direction None = doesn't reach
+    Manhattan) and coarse `shape_samples` outlines to pick between them by vehicle position."""
 
     def __init__(self, agency: str):
         data = json.loads((config.BACKEND_DATA_DIR / f"{agency}.json").read_text())
         self.routes: dict[str, dict] = data["routes"]
         self.trips: dict[str, list] = data["trips"]
         self.stops_by_name: dict[str, str] = data.get("stops_by_name", {})
+        self.alternatives: dict[str, list[list]] = data.get("alternatives", {})
+        self.shape_samples: dict[str, list[list[float]]] = data.get("shape_samples", {})
 
     def get(self, key: str) -> list | None:
         return self.trips.get(key)
+
+    def pick(self, key: str, lon: float, lat: float) -> list | None:
+        """The candidate trip for `key` whose shape is nearest (lon, lat)."""
+        primary = self.trips.get(key)
+        alts = self.alternatives.get(key)
+        if primary is None or not alts:
+            return primary
+        candidates = [primary, *alts]
+        return min(candidates, key=lambda e: _dist_to_polyline_m(lon, lat, self.shape_samples.get(e[3]) or []))
+
+
+_M_PER_DEG_LAT = 111_320.0
+_M_PER_DEG_LON = _M_PER_DEG_LAT * math.cos(math.radians(40.75))
+
+
+def _dist_to_polyline_m(lon: float, lat: float, line: list[list[float]]) -> float:
+    """Approximate distance in meters from a point to a polyline (equirectangular around NYC)."""
+    if not line:
+        return math.inf
+    px, py = lon * _M_PER_DEG_LON, lat * _M_PER_DEG_LAT
+    best = math.inf
+    pts = [(x * _M_PER_DEG_LON, y * _M_PER_DEG_LAT) for x, y in line]
+    for (ax, ay), (bx, by) in zip(pts, pts[1:] or pts):
+        dx, dy = bx - ax, by - ay
+        l2 = dx * dx + dy * dy
+        t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / l2)) if l2 else 0.0
+        best = min(best, math.hypot(px - (ax + t * dx), py - (ay + t * dy)))
+    return best
 
 
 @dataclass
@@ -81,8 +116,8 @@ class GtfsRtAdapter:
             if now - observed_at > MAX_POSITION_AGE_S:
                 continue
             trip_key = vp.trip.trip_id
-            match = self.index.get(self.index_key(vp.trip))
-            if match is None:
+            match = self.index.pick(self.index_key(vp.trip), vp.position.longitude, vp.position.latitude)
+            if match is None or match[1] is None:  # unknown trip, or nearest candidate isn't a commuter trip
                 skipped += 1
                 continue
             route_id, direction, headsign, shape_id, static_trip_id, number = match[:6]

@@ -25,6 +25,7 @@ def make_rail_adapter() -> NjtRailAdapter:
     # schedule: Ridgewood at 18:25:00 on the service day
     index.trips = {"1726": ["5", "inbound", "HOBOKEN", "461", "1880", "1726", {"131": 18 * 3600 + 25 * 60}]}
     index.stops_by_name = {"NEW YORK PENN STATION": "105", "RAMSEY ROUTE 17 STATION": "128", "RIDGEWOOD": "131"}
+    index.alternatives, index.shape_samples = {}, {}
     adapter.__dict__["index"] = index
     return adapter
 
