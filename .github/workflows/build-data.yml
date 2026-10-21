@@ -1,0 +1,49 @@
+name: Daily data build
+
+# NJT rail and bus trip indexes cover only today and tomorrow, so the map data must be rebuilt
+# every day. All schedules are public downloads; no secrets needed. Pushing the result to main
+# makes Vercel redeploy.
+on:
+  schedule:
+    - cron: "0 8 * * *"   # 08:00 UTC = 3-4 AM in New York, before morning service
+  workflow_dispatch:       # "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      - name: Build map data
+        run: python scripts/build_static.py
+
+      - name: Test
+        run: python -m pytest -q
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data transit/data data/road_fill_cache.json data/manhattan.geojson
+          if git diff --cached --quiet; then
+            echo "No data changes."
+          else
+            git commit -m "Daily data build $(date -u +%F)"
+            git push
+          fi

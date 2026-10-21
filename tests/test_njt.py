@@ -1,3 +1,4 @@
+import json
 import time
 
 import httpx
@@ -71,6 +72,39 @@ def test_token_store_roundtrip(tmp_path):
     store.set("rail", {"token": "abc"})
     assert store.get("rail") == {"token": "abc"}
     assert (tmp_path / "tokens.json").stat().st_mode & 0o777 == 0o600
+
+
+def test_redis_token_store_reads_once_and_writes_through():
+    from transit.njt import RedisTokenStore
+    calls, data = [], {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        cmd = json.loads(request.content)
+        calls.append(cmd[0])
+        assert request.headers["authorization"] == "Bearer secret"
+        if cmd[0] == "GET":
+            return httpx.Response(200, json={"result": data.get(cmd[1])})
+        data[cmd[1]] = cmd[2]
+        return httpx.Response(200, json={"result": "OK"})
+
+    client = httpx.Client(transport=httpx.MockTransport(handler), headers={"Authorization": "Bearer secret"})
+    store = RedisTokenStore("https://example.upstash.io/", "secret", client=client)
+    assert store.get("rail") == {}
+    assert store.get("rail") == {}           # served from memory
+    store.set("rail", {"token": "abc"})
+    assert store.get("rail") == {"token": "abc"}
+    assert calls == ["GET", "SET"]
+    assert json.loads(data["njt_token:rail"]) == {"token": "abc"}
+
+
+def test_default_store_uses_redis_only_when_configured(monkeypatch):
+    from transit.njt import RedisTokenStore, default_store
+    for k in ("UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "KV_REST_API_URL", "KV_REST_API_TOKEN"):
+        monkeypatch.delenv(k, raising=False)
+    assert isinstance(default_store(), FileTokenStore)
+    monkeypatch.setenv("KV_REST_API_URL", "https://example.upstash.io")
+    monkeypatch.setenv("KV_REST_API_TOKEN", "t")
+    assert isinstance(default_store(), RedisTokenStore)
 
 
 def test_login_cooldown_prevents_repeated_logins(tmp_path, monkeypatch):

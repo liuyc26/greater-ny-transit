@@ -8,8 +8,8 @@
  + Manhattan boundary                                   └► transit/data/<agency>.json         (trip index)
 
  Browser ──poll per agency──► CDN cache ──miss──► FastAPI function  GET /api/vehicles/{agency}
-   ▲         LIRR 5s                               one adapter fetches its agency feed,
-   │         MNR 10s, NJT rail 10s                 matches trips via the index,
+   ▲         LIRR, MNR, NJT rail 10s               one adapter fetches its agency feed,
+   │                                               matches trips via the index,
    │         NJT bus 15s                           returns normalized Vehicles (JSON)
    │
    └─ animates every vehicle along its track every frame (public/track.js)

@@ -1,58 +1,63 @@
 # Deployment
 
-**Status: not deployed yet.** Everything runs locally. This is the plan, all on free tiers with no payment
-method (the project is non-commercial).
+All on free tiers with no payment method (the project is non-commercial).
 
-## Target setup
-
-| Piece | Service | Notes |
+| Piece | Service | How |
 |---|---|---|
-| Frontend (`public/`) | Vercel Hobby (static) | Served from the CDN |
-| API (`api/index.py` → `transit.app:app`) | Vercel Hobby (Python function) | Responses cached at the CDN per `Cache-Control` |
-| NJT token store | Upstash Redis (free tier) | Required: see below |
-| Daily data build | GitHub Actions (cron) | Free for public repos. Vercel Hobby cron runs at most once a day, with ±1 hour precision |
+| Frontend (`public/`) | Vercel Hobby | Served from Vercel's CDN at the site root |
+| API (`transit.app:app`) | Vercel Hobby, one Python function | Set by `[tool.vercel] entrypoint` in `pyproject.toml`; responses cached at the CDN per `Cache-Control` |
+| NJT token store | Upstash Redis (free) | `RedisTokenStore` in `transit/njt.py`, used automatically when its env vars are set |
+| Daily data build | GitHub Actions | `.github/workflows/build-data.yml`, 08:00 UTC; pushes to `main`, which redeploys Vercel |
 
-## Blocker: shared NJT token store
+## Why the token store
 
-RailData allows only ~5 new tokens per day. Locally, tokens live in `.cache/njt_tokens.json`. Serverless
-instances don't share a filesystem, so every cold start would log in again and the daily allowance would
-run out within hours. Before deploying:
+NJ Transit RailData allows only ~5 new tokens per day. Serverless instances don't share a filesystem, so
+without a shared store every cold start would log in again. `RedisTokenStore` keeps tokens in memory and
+reads Redis once per cold start, writing only on login: a few commands a day against Upstash's 500K/month.
 
-1. Create a free Upstash Redis database.
-2. Add a store class to `transit/njt.py` with the same `get(api)` / `set(api, entry)` interface as
-   `FileTokenStore`, using Upstash's REST API (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`).
-3. Choose the store from environment variables: Upstash when set, the file store otherwise.
+It reads `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`, or the `KV_REST_API_URL` /
+`KV_REST_API_TOKEN` names the Vercel Marketplace integration sets. Without them it falls back to the local
+file `.cache/njt_tokens.json`.
 
-## Steps
+## First deploy
 
-1. **Token store:** as above.
-2. **Vercel config:** add `vercel.json` routing `/api/*` to `api/index.py` and serving `public/` as static
-   output. Make sure `transit/data/*.json` is bundled with the function. Check the current Vercel Python
-   runtime docs for both; they weren't verified yet.
-3. **Vercel project:** import the GitHub repo. Set environment variables `NJT_USERNAME`, `NJT_PASSWORD`,
-   `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
-4. **Daily build workflow** (`.github/workflows/build-data.yml`): every morning before service (e.g.
-   08:00 UTC, about 3–4 AM in New York):
-   - run `scripts/build_static.py` (secrets `NJT_USERNAME`, `NJT_PASSWORD`);
-   - commit changed `public/data/*`, `transit/data/*` and `data/road_fill_cache.json`;
-   - the push triggers a Vercel redeploy.
+1. **Vercel:** sign up at vercel.com with GitHub (Hobby plan). *Add New → Project*, import
+   `liuyc26/greater-ny-transit`. Framework preset: FastAPI (auto-detected from `pyproject.toml`).
+2. **Upstash:** in the Vercel project, *Storage → Marketplace → Upstash (Redis)*, free plan, connect it to
+   the project. This creates the database and sets the `KV_REST_API_*` variables.
+3. **Environment variables** (Project → Settings → Environment Variables): `NJT_USERNAME`, `NJT_PASSWORD`.
+4. **Deploy** (or redeploy after adding variables), then check:
+   - `/api/health` and `/api/agencies`
+   - `/api/vehicles/lirr`, `/mnr`, `/njt_rail`, `/njt_bus`: each `feeds.<agency>.ok` should be `true`
+   - the map loads, vehicles move, hover works, both themes work
+5. **GitHub Actions:** the daily build needs no secrets. Run it once from the Actions tab (*Daily data
+   build → Run workflow*) to confirm it commits and that Vercel redeploys.
 
-   NJT rail and bus indexes cover only today and tomorrow, so if the build fails two days in a row,
-   NJT rail ETAs and bus matching stop. Monitor the workflow.
-5. **Check limits:** Vercel Hobby function size, duration and invocation limits weren't verified. The
-   function is small (~1 MB of indexes) and does one outbound request per call.
+## Daily build
 
-## Request budget once deployed
+The workflow rebuilds all map data and trip indexes, runs the tests, and commits changes to `main` as
+`github-actions[bot]`. NJT indexes cover only today and tomorrow, so if it fails two days in a row, NJT rail
+arrival times and bus matching stop. GitHub emails the repo owner when a scheduled run fails.
 
-With CDN caching, each agency endpoint calls its feed at most once per cache period per CDN region,
-regardless of visitors:
+GitHub disables scheduled workflows in repositories with no activity for 60 days; the daily commits count
+as activity.
 
-| Agency | Cache | Feed calls/day per region (max) |
+## Free-tier budget
+
+Vercel Hobby (monthly): 4 h active CPU, 1M function invocations, 100 GB transfer, 300 s max duration.
+Measured CPU per request: ~4 ms for each rail feed, ~20 ms for NJT bus (more at peak).
+
+Each agency endpoint calls its feed at most once per cache period per CDN location, regardless of visitors:
+
+| Agency | Cache | Max feed calls/day per CDN location |
 |---|---|---|
-| LIRR | 5 s | ~17,000 (MTA states no limit) |
+| LIRR | 10 s | ~8,600 |
 | Metro-North | 10 s | ~8,600 |
 | NJT rail | 10 s | ~8,600 (limit undocumented) |
 | NJT bus | 15 s | ~11,000 incl. stale-snapshot retries |
 
-NJ TRANSIT's agreement caps total use at 100,000 requests/day; the bus API reportedly allows ~40,000/day.
-If traffic comes from many CDN regions, multiply accordingly and consider raising `cache_s`.
+That's ~32k invocations/day if someone watches 24/7, close to the 1M/month allowance. Typical hobby
+traffic is far below. If usage approaches the limits (Vercel → Usage), raise `cache_s` in
+`transit/feeds/__init__.py`. Hobby has no card on file, so exceeding limits pauses the site instead of billing.
+
+NJ TRANSIT caps total use at 100,000 requests/day; the bus API reportedly allows ~40,000/day.

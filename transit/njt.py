@@ -3,8 +3,8 @@
 Tokens are scarce (RailData allows only ~5 new tokens per day), so they're cached in a store
 and a fresh login is attempted at most once per LOGIN_COOLDOWN_S per API.
 
-Local dev uses a JSON file. Serverless instances don't share a filesystem, so production needs
-a shared store (e.g. Upstash Redis) implementing the same get/set interface.
+Local dev uses a JSON file. Serverless instances don't share a filesystem, so production uses
+Upstash Redis (RedisTokenStore), selected automatically when its environment variables are set.
 """
 
 import json
@@ -52,6 +52,44 @@ class FileTokenStore:
         tmp.replace(self.path)
 
 
+class RedisTokenStore:
+    """Token store shared by all serverless instances, via the Upstash Redis REST API.
+
+    Entries are cached in memory, so Redis is read once per cold start and written only on login:
+    a few commands a day, far under Upstash's free tier (500K commands/month).
+    """
+
+    KEY_PREFIX = "njt_token:"
+
+    def __init__(self, url: str, token: str, client: httpx.Client | None = None):
+        self.url = url.rstrip("/")
+        self.client = client or httpx.Client(timeout=5, headers={"Authorization": f"Bearer {token}"})
+        self.cache: dict[str, dict] = {}
+
+    def _command(self, *args: str):
+        resp = self.client.post(self.url, json=list(args))
+        resp.raise_for_status()
+        return resp.json().get("result")
+
+    def get(self, api: Api) -> dict:
+        if api not in self.cache:
+            raw = self._command("GET", self.KEY_PREFIX + api)
+            self.cache[api] = json.loads(raw) if raw else {}
+        return dict(self.cache[api])
+
+    def set(self, api: Api, entry: dict) -> None:
+        self._command("SET", self.KEY_PREFIX + api, json.dumps(entry))
+        self.cache[api] = dict(entry)
+
+
+def default_store() -> FileTokenStore | RedisTokenStore:
+    """Upstash Redis when configured (production), else the local JSON file. Accepts both the
+    Upstash names and the KV_* names the Vercel Marketplace integration sets."""
+    url = os.environ.get("UPSTASH_REDIS_REST_URL") or os.environ.get("KV_REST_API_URL")
+    token = os.environ.get("UPSTASH_REDIS_REST_TOKEN") or os.environ.get("KV_REST_API_TOKEN")
+    return RedisTokenStore(url, token) if url and token else FileTokenStore()
+
+
 def _credentials() -> tuple[str, str]:
     user, password = os.environ.get("NJT_USERNAME"), os.environ.get("NJT_PASSWORD")
     if not user or not password:
@@ -86,8 +124,8 @@ def _is_invalid_token(resp: httpx.Response) -> bool:
 class NjtClient:
     """Authenticated calls to the NJT rail or bus API, sharing one token store."""
 
-    def __init__(self, store: FileTokenStore | None = None):
-        self.store = store or FileTokenStore()
+    def __init__(self, store: FileTokenStore | RedisTokenStore | None = None):
+        self.store = store or default_store()
 
     def _cached_token(self, api: Api) -> str | None:
         return self.store.get(api).get("token")

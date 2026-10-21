@@ -1,0 +1,16 @@
+[project]
+name = "greater-ny-transit"
+version = "0.1.0"
+description = "Live map of commuter trains and buses into and out of Manhattan"
+requires-python = ">=3.12"
+# Runtime dependencies (what Vercel installs). Keep in sync with requirements.txt.
+dependencies = [
+    "fastapi==0.115.6",
+    "httpx==0.28.1",
+    "gtfs-realtime-bindings==1.0.0",
+    "python-dotenv==1.0.1",
+]
+
+[tool.vercel]
+# Vercel deploys this FastAPI app as one function; public/ is served from the CDN.
+entrypoint = "transit.app:app"

@@ -14,15 +14,13 @@
 | M6 | NYC Ferry (GTFS-RT) | |
 | M7 | Delays: color dots by delay (LIRR and NJT have it; MNR needs schedule comparison), service alerts, cancellations | |
 | M8 | History: sample every ~5 min from GitHub Actions into a free Postgres (Neon/Supabase); on-time stats; rush-hour replay | |
-| M9 | Deploy: Upstash token store, Vercel config, daily build workflow (see [deployment.md](deployment.md)) | |
+| M9 | Deploy: Upstash token store, Vercel config, daily build workflow (see [deployment.md](deployment.md)) | code ready; accounts pending |
 
 ## Smaller ideas
 
 - Fading trails behind moving vehicles.
 - Hide overlapping number labels near Port Authority.
 - On phones, leave room for the panel when fitting the map, or make the panel collapsible.
-- Disambiguate the ~13% of NJT bus trips with duplicate route + start time by picking the candidate whose
-  shape is nearest the bus.
 
 ## Risks and open questions
 
