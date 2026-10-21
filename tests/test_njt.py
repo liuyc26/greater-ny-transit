@@ -127,6 +127,26 @@ def test_login_error_is_recorded_and_shown_during_cooldown(tmp_path, monkeypatch
         asyncio.run(call())
 
 
+def test_no_login_on_vercel_without_shared_store(tmp_path, monkeypatch):
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("NJT_USERNAME", "u")
+    monkeypatch.setenv("NJT_PASSWORD", "p")
+    with pytest.raises(NjtAuthError, match="no shared token store"):
+        NjtClient(FileTokenStore(tmp_path / "t.json")).post_sync("rail", "getVehicleData")
+
+
+def test_file_store_keeps_token_in_memory_when_unwritable(tmp_path):
+    ro = tmp_path / "ro"
+    ro.mkdir()
+    ro.chmod(0o500)  # read-only directory, like Vercel's /var/task
+    try:
+        store = FileTokenStore(ro / "sub" / "tokens.json")
+        store.set("rail", {"token": "abc"})  # must not raise
+        assert store.get("rail") == {"token": "abc"}
+    finally:
+        ro.chmod(0o700)
+
+
 def test_login_cooldown_prevents_repeated_logins(tmp_path, monkeypatch):
     store = FileTokenStore(tmp_path / "tokens.json")
     store.set("rail", {"last_login_attempt": int(time.time())})

@@ -31,8 +31,15 @@ class NjtAuthError(RuntimeError):
 
 
 class FileTokenStore:
+    """Local JSON file (dev). Entries are also kept in memory, so if the file can't be written
+    (e.g. a read-only filesystem) a running process still reuses its token instead of logging in
+    on every request."""
+
+    shared = False  # not visible to other processes/instances
+
     def __init__(self, path: Path | None = None):
         self.path = path or Path(os.environ.get("NJT_TOKEN_CACHE", config.ROOT / ".cache" / "njt_tokens.json"))
+        self.memory: dict[str, dict] = {}
 
     def _load(self) -> dict:
         try:
@@ -41,16 +48,22 @@ class FileTokenStore:
             return {}
 
     def get(self, api: Api) -> dict:
+        if api in self.memory:
+            return dict(self.memory[api])
         return self._load().get(api, {})
 
     def set(self, api: Api, entry: dict) -> None:
-        data = self._load()
-        data[api] = entry
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(data))
-        os.chmod(tmp, 0o600)
-        tmp.replace(self.path)
+        self.memory[api] = dict(entry)
+        try:
+            data = self._load()
+            data[api] = entry
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data))
+            os.chmod(tmp, 0o600)
+            tmp.replace(self.path)
+        except OSError as e:
+            print(f"NJT token file not writable ({e}); keeping {api} token in memory only")
 
 
 class RedisTokenStore:
@@ -61,6 +74,7 @@ class RedisTokenStore:
     """
 
     KEY_PREFIX = "njt_token:"
+    shared = True
 
     def __init__(self, url: str, token: str, client: httpx.Client | None = None):
         self.url = url.rstrip("/")
@@ -133,10 +147,33 @@ class NjtClient:
     def __init__(self, store: FileTokenStore | RedisTokenStore | None = None):
         self.store = store or default_store()
 
+    def status(self) -> dict:
+        """Token-store diagnostics for /api/health (never includes tokens or credentials)."""
+        now = time.time()
+        out = {"store": type(self.store).__name__, "shared": self.store.shared}
+        for api in ("rail", "bus"):
+            try:
+                e = self.store.get(api)
+            except Exception as ex:  # e.g. Redis unreachable
+                out[api] = {"error": f"{type(ex).__name__}: {ex}"}
+                continue
+            out[api] = {
+                "has_token": bool(e.get("token")),
+                "token_age_h": round((now - e["obtained_at"]) / 3600, 1) if e.get("obtained_at") else None,
+                "last_login_min_ago": round((now - e["last_login_attempt"]) / 60) if e.get("last_login_attempt") else None,
+                "last_login_error": e.get("last_login_error"),
+            }
+        return out
+
     def _cached_token(self, api: Api) -> str | None:
         return self.store.get(api).get("token")
 
     def _check_cooldown(self, api: Api) -> None:
+        # On Vercel every instance has its own memory and a read-only filesystem: without a shared
+        # store each cold start would log in again, and RailData allows only ~5 logins a day.
+        if os.environ.get("VERCEL") and not self.store.shared:
+            raise NjtAuthError(f"{api}: no shared token store configured (set the Upstash Redis "
+                               "env vars); refusing to log in from a serverless instance")
         entry = self.store.get(api)
         if time.time() - entry.get("last_login_attempt", 0) <= LOGIN_COOLDOWN_S:
             raise NjtAuthError(f"{api}: login on cooldown; last login error: {entry.get('last_login_error')}")
