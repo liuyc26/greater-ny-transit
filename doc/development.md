@@ -66,7 +66,7 @@ the network.
 
 ## NJT tokens
 
-Tokens are cached in `.cache/njt_tokens.json` (gitignored, mode 600). RailData allows only ~5 new tokens
+Tokens are cached in `.cache/njt_tokens.json` (gitignored, mode 600). RailData allows only 10 logins
 per day, so don't delete this file casually. If a token is rejected, the client re-logs in at most once
 every 15 minutes per API.
 

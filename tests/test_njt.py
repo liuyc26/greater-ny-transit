@@ -97,6 +97,23 @@ def test_redis_token_store_reads_once_and_writes_through():
     assert json.loads(data["njt_token:rail"]) == {"token": "abc"}
 
 
+def test_redis_token_store_rechecks_missing_token(monkeypatch):
+    # Another instance (or the seed script) stores a token: an instance that cached "no token"
+    # must pick it up after RECHECK_S, without a cold start.
+    from transit import njt
+    data = {}
+    client = httpx.Client(transport=httpx.MockTransport(
+        lambda req: httpx.Response(200, json={"result": data.get(json.loads(req.content)[1])})))
+    store = njt.RedisTokenStore("https://example.upstash.io", "t", client=client)
+    now = [1000.0]
+    monkeypatch.setattr(njt.time, "time", lambda: now[0])
+    assert store.get("rail") == {}
+    data["njt_token:rail"] = json.dumps({"token": "seeded"})
+    assert store.get("rail") == {}             # still cached
+    now[0] += njt.RedisTokenStore.RECHECK_S + 1
+    assert store.get("rail") == {"token": "seeded"}
+
+
 def test_default_store_uses_redis_only_when_configured(monkeypatch):
     from transit.njt import RedisTokenStore, default_store
     for k in ("UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "KV_REST_API_URL", "KV_REST_API_TOKEN"):

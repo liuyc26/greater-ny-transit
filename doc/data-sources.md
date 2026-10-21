@@ -30,7 +30,7 @@ road geometry from the OSRM public server (`router.project-osrm.org`, cached in 
 - No `delay` field: delays must be computed against the schedule (not yet done).
 
 ### NJ Transit Rail
-- Login: `POST getToken` (multipart `username`, `password`) → `{Authenticated, UserToken}`. **Only ~5 new
+- Login: `POST getToken` (multipart `username`, `password`) → `{Authenticated, UserToken}`. **Only 10 new
   tokens per day**, so tokens are cached and re-login is attempted at most every 15 minutes.
 - Positions jump 2–6 km between polls, and `LAST_MODIFIED` doesn't change when they do: it isn't the
   position time. The adapter stamps positions with fetch time and uses `LAST_MODIFIED` only to drop dead records.

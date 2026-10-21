@@ -1,6 +1,6 @@
 """Copy NJT tokens from the local token file into the shared Upstash Redis store.
 
-NJ Transit RailData allows only ~5 new tokens per day, but tokens stay valid for days. If production
+NJ Transit RailData allows only 10 logins per day, but tokens stay valid for days. If production
 has no working token (e.g. the daily login limit was hit), seed it with a token that works locally
 instead of waiting for the limit to reset.
 

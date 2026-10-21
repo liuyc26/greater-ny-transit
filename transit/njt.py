@@ -1,6 +1,6 @@
 """NJ Transit API access: login, token caching, authenticated POST calls.
 
-Tokens are scarce (RailData allows only ~5 new tokens per day), so they're cached in a store
+Tokens are scarce (RailData allows 10 logins per day: "Daily usage limit:10"), so they're cached in a store
 and a fresh login is attempted at most once per LOGIN_COOLDOWN_S per API.
 
 Local dev uses a JSON file. Serverless instances don't share a filesystem, so production uses
@@ -69,17 +69,20 @@ class FileTokenStore:
 class RedisTokenStore:
     """Token store shared by all serverless instances, via the Upstash Redis REST API.
 
-    Entries are cached in memory, so Redis is read once per cold start and written only on login:
-    a few commands a day, far under Upstash's free tier (500K commands/month).
+    Entries with a token are cached in memory, so Redis is read once per cold start and written only
+    on login: a few commands a day, far under Upstash's free tier (500K commands/month). Entries
+    without a token are re-read every RECHECK_S, so a token another instance (or the seed script)
+    stores is picked up without waiting for a cold start.
     """
 
     KEY_PREFIX = "njt_token:"
+    RECHECK_S = 30
     shared = True
 
     def __init__(self, url: str, token: str, client: httpx.Client | None = None):
         self.url = url.rstrip("/")
         self.client = client or httpx.Client(timeout=5, headers={"Authorization": f"Bearer {token}"})
-        self.cache: dict[str, dict] = {}
+        self.cache: dict[str, tuple[float, dict]] = {}  # api -> (fetched_at, entry)
 
     def _command(self, *args: str):
         resp = self.client.post(self.url, json=list(args))
@@ -87,14 +90,15 @@ class RedisTokenStore:
         return resp.json().get("result")
 
     def get(self, api: Api) -> dict:
-        if api not in self.cache:
+        cached = self.cache.get(api)
+        if cached is None or (not cached[1].get("token") and time.time() - cached[0] > self.RECHECK_S):
             raw = self._command("GET", self.KEY_PREFIX + api)
-            self.cache[api] = json.loads(raw) if raw else {}
-        return dict(self.cache[api])
+            cached = self.cache[api] = (time.time(), json.loads(raw) if raw else {})
+        return dict(cached[1])
 
     def set(self, api: Api, entry: dict) -> None:
         self._command("SET", self.KEY_PREFIX + api, json.dumps(entry))
-        self.cache[api] = dict(entry)
+        self.cache[api] = (time.time(), dict(entry))
 
 
 def default_store() -> FileTokenStore | RedisTokenStore:
@@ -170,7 +174,7 @@ class NjtClient:
 
     def _check_cooldown(self, api: Api) -> None:
         # On Vercel every instance has its own memory and a read-only filesystem: without a shared
-        # store each cold start would log in again, and RailData allows only ~5 logins a day.
+        # store each cold start would log in again, and RailData allows only 10 logins a day.
         if os.environ.get("VERCEL") and not self.store.shared:
             raise NjtAuthError(f"{api}: no shared token store configured (set the Upstash Redis "
                                "env vars); refusing to log in from a serverless instance")

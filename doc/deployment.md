@@ -11,7 +11,7 @@ All on free tiers with no payment method (the project is non-commercial).
 
 ## Why the token store
 
-NJ Transit RailData allows only ~5 new tokens per day. Serverless instances don't share a filesystem, so
+NJ Transit RailData allows only 10 logins per day (its error: "Daily usage limit:10"). Serverless instances don't share a filesystem, so
 without a shared store every cold start would log in again. `RedisTokenStore` keeps tokens in memory and
 reads Redis once per cold start, writing only on login: a few commands a day against Upstash's 500K/month.
 
