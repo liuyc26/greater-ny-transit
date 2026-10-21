@@ -63,8 +63,11 @@ const map = new maplibregl.Map({
   center: [-73.9, 40.82],
   zoom: 8.6,
   renderWorldCopies: false,
-  attributionControl: { compact: true },
+  attributionControl: false,
 });
+// The map credit is required. On phones the panel sits along the bottom, so put it top-left there.
+map.addControl(new maplibregl.AttributionControl({ compact: true }),
+  window.matchMedia("(max-width: 600px)").matches ? "top-left" : "bottom-right");
 
 /**
  * Limit the map to the service area: zooming out stops when every route line fits on screen,
@@ -95,7 +98,10 @@ function applyRegionLimits() {
   map.jumpTo({ center: prev.center, zoom: Math.max(prev.zoom, fit.zoom) });
 }
 map.on("resize", applyRegionLimits);
-map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+// Zoom buttons on larger screens only: phones pinch-zoom, and the buttons would crowd the map credit.
+if (!window.matchMedia("(max-width: 600px)").matches) {
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+}
 
 const overlay = new deck.MapboxOverlay({
   layers: [],
@@ -395,8 +401,27 @@ function renderPanel() {
       `<td>${inb}</td><td>${out}</td><td>${total}</td></tr>`;
   });
   document.querySelector("#counts tbody").innerHTML = rows.join("");
+  let trains = 0, buses = 0;
+  for (const { data: v } of state.vehicles.values()) {
+    if (AGENCIES[v.agency]?.kind === "Bus") buses++; else trains++;
+  }
+  document.getElementById("summary").textContent = `${trains} trains · ${buses} buses live`;
   updateStatus();
 }
+
+// Collapsible panel: starts collapsed on phones so the map isn't hidden behind it.
+const PHONE_QUERY = window.matchMedia("(max-width: 600px)");
+function setPanelCollapsed(collapsed) {
+  document.getElementById("panel").classList.toggle("collapsed", collapsed);
+  const btn = document.getElementById("panel-toggle");
+  btn.setAttribute("aria-expanded", String(!collapsed));
+  btn.setAttribute("aria-label", collapsed ? "Expand panel" : "Collapse panel");
+  btn.title = collapsed ? "Expand panel" : "Collapse panel";
+}
+document.getElementById("panel-toggle").addEventListener("click", () => {
+  setPanelCollapsed(!document.getElementById("panel").classList.contains("collapsed"));
+});
+setPanelCollapsed(PHONE_QUERY.matches);
 
 function updateStatus() {
   const times = Object.values(state.lastUpdate);

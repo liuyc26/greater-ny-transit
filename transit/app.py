@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.gzip import GZipMiddleware
 
 from . import config
-from .feeds import ADAPTERS, NJT
+from .feeds import ADAPTERS, NJT, NJT_SNAPSHOT
 from .models import FeedStatus, VehiclesResponse
 
 load_dotenv(config.ROOT / ".env")
@@ -53,4 +53,4 @@ async def health() -> dict:
     meta_path = config.PUBLIC_DATA_DIR / "meta.json"
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else None
     return {"ok": True, "agencies": list(ADAPTERS_BY_ID), "static_built_at": meta and meta["built_at"],
-            "njt_auth": NJT.status()}
+            "njt_auth": NJT.status(), "njt_snapshot": NJT_SNAPSHOT.status()}

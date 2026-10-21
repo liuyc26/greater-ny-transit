@@ -49,14 +49,17 @@ Measured CPU per request: ~4 ms for each rail feed, ~20 ms for NJT bus (more at 
 
 Each agency endpoint calls its feed at most once per cache period per CDN location, regardless of visitors:
 
-| Agency | Cache | Max feed calls/day per CDN location |
+| Agency | Cache | Upstream calls/day (max) |
 |---|---|---|
-| LIRR | 10 s | ~8,600 |
-| Metro-North | 10 s | ~8,600 |
-| NJT rail | 10 s | ~8,600 (limit undocumented) |
-| NJT bus | 15 s | ~11,000 incl. stale-snapshot retries |
+| LIRR | 10 s CDN | ~8,600 per CDN location |
+| Metro-North | 10 s CDN | ~8,600 per CDN location |
+| NJT rail | 30 s shared snapshot | ~2,900 site-wide, regardless of traffic |
+| NJT bus | 30 s shared snapshot | ~5,500 site-wide incl. stale-snapshot retries |
 
-That's ~32k invocations/day if someone watches 24/7, close to the 1M/month allowance. Typical hobby
+The NJT snapshot costs Upstash a GET per instance per 30 s plus one SET per refresh, about 3–9K commands
+and ≤100 MB a day under constant traffic (gzipped snapshot, ~12 KB). Free tier: 500K commands, 10 GB/month.
+
+Function invocations are bounded by the CDN cache (~35k/day per active CDN location with 24/7 viewing), against a 1M/month allowance. Typical hobby
 traffic is far below. If usage approaches the limits (Vercel → Usage), raise `cache_s` in
 `transit/feeds/__init__.py`. Hobby has no card on file, so exceeding limits pauses the site instead of billing.
 

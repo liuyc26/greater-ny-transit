@@ -16,6 +16,7 @@ from typing import Literal
 import httpx
 
 from . import config
+from .kv import upstash_env
 
 Api = Literal["rail", "bus"]
 
@@ -102,11 +103,9 @@ class RedisTokenStore:
 
 
 def default_store() -> FileTokenStore | RedisTokenStore:
-    """Upstash Redis when configured (production), else the local JSON file. Accepts both the
-    Upstash names and the KV_* names the Vercel Marketplace integration sets."""
-    url = os.environ.get("UPSTASH_REDIS_REST_URL") or os.environ.get("KV_REST_API_URL")
-    token = os.environ.get("UPSTASH_REDIS_REST_TOKEN") or os.environ.get("KV_REST_API_TOKEN")
-    return RedisTokenStore(url, token) if url and token else FileTokenStore()
+    """Upstash Redis when configured (production), else the local JSON file."""
+    env = upstash_env()
+    return RedisTokenStore(*env) if env else FileTokenStore()
 
 
 def _credentials() -> tuple[str, str]:

@@ -54,6 +54,15 @@ came from.
 - `NjtRailAdapter` (`feeds/njt_rail.py`): NJT's own JSON format; computes arrival times from the schedule
   plus reported lateness.
 
+### NJ Transit snapshot (`transit/snapshot.py`)
+
+NJ Transit has daily request limits, so visitors never trigger NJT calls directly. Rail and bus are fetched
+together into one `SharedSnapshot`, at most once every 30 s for the whole site. Each request is answered
+from this instance's memory if fresh, else from the shared copy in Upstash Redis (another instance may have
+refreshed it), else this request refreshes it, one refresh at a time per instance. NJT traffic is then
+~1 fetch per 30 s regardless of visitors, CDN locations or instances. `SnapshotAdapter` serves each agency
+out of the snapshot. MTA feeds have no stated limit and use the CDN cache only.
+
 ### Trip index
 
 `transit/data/<agency>.json` maps the identifier the realtime feed uses to what the map needs:

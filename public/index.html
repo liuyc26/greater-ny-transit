@@ -4,6 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Greater NY Live Transit</title>
+  <meta name="description" content="Live map of the LIRR, Metro-North and NJ Transit trains and buses commuting into and out of Manhattan.">
+  <meta name="theme-color" content="#0e1116">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <!-- Link previews (absolute URLs required) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://greater-ny-transit.vercel.app/">
+  <meta property="og:title" content="Greater NY Live Transit">
+  <meta property="og:description" content="Every LIRR, Metro-North and NJ Transit train and bus commuting into and out of Manhattan, live.">
+  <meta property="og:image" content="https://greater-ny-transit.vercel.app/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -14,34 +26,47 @@
   <aside id="panel">
     <div class="header">
       <h1>Greater NY Live Transit</h1>
-      <button id="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch to light mode">
-        <!-- sun: shown in dark mode -->
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
-        </svg>
-        <!-- moon: shown in light mode -->
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
-        </svg>
-      </button>
+      <div class="header-buttons">
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Switch to light mode" title="Switch to light mode">
+          <!-- sun: shown in dark mode -->
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+          </svg>
+          <!-- moon: shown in light mode -->
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+          </svg>
+        </button>
+        <button id="panel-toggle" class="icon-button" type="button" aria-expanded="true" aria-controls="panel-body" aria-label="Collapse panel" title="Collapse panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m6 15 6-6 6 6"/>
+          </svg>
+        </button>
+      </div>
     </div>
-    <p class="sub">Trains, buses and ferries commuting to Manhattan</p>
-    <div class="filters" role="group" aria-label="Direction">
-      <button data-dir="all" class="active">All</button>
-      <button data-dir="inbound">→ Manhattan</button>
-      <button data-dir="outbound">Leaving</button>
+    <p id="summary" class="summary"></p>
+    <div id="panel-body">
+      <p class="sub">Trains and buses commuting to Manhattan</p>
+      <div class="filters" role="group" aria-label="Direction">
+        <button data-dir="all" class="active">All</button>
+        <button data-dir="inbound">→ Manhattan</button>
+        <button data-dir="outbound">Leaving</button>
+      </div>
+      <table id="counts">
+        <thead><tr><th></th><th>In</th><th>Out</th><th>Total</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p id="status" class="status">Loading…</p>
+      <!-- Required by the MTA and NJ TRANSIT data feed terms. -->
+      <p class="disclaimer">
+        Data obtained from MTA and NJ TRANSIT servers and redistributed by this site.
+        Not affiliated with, licensed, or endorsed by the MTA or NJ TRANSIT.
+        Information may not be real time and may be inaccurate or incomplete; positions between updates are estimated.
+        <a href="https://github.com/liuyc26/greater-ny-transit" target="_blank" rel="noopener">Source on GitHub</a>
+      </p>
     </div>
-    <table id="counts">
-      <thead><tr><th></th><th>In</th><th>Out</th><th>Total</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <p id="status" class="status">Loading…</p>
-    <!-- Required by the MTA and NJ TRANSIT data feed terms. -->
-    <p class="disclaimer">
-      Data obtained from MTA and NJ TRANSIT servers and redistributed by this site.
-      Not affiliated with, licensed, or endorsed by the MTA or NJ TRANSIT.
-      Information may not be real time and may be inaccurate or incomplete; positions between updates are estimated.
-    </p>
+    <!-- Shown only while collapsed, so the required notice stays visible. -->
+    <p class="mini-disclaimer">Data may not be real time · not affiliated with the MTA or NJ TRANSIT</p>
   </aside>
   <script type="module" src="app.js"></script>
 </body>

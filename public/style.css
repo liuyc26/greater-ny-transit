@@ -39,12 +39,22 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 }
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 h1 { margin: 0; font-size: 17px; letter-spacing: 0.2px; }
-#theme-toggle {
-  flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -4px -4px 0 0;
+.header-buttons { flex: none; display: flex; gap: 6px; margin: -4px -4px 0 0; }
+.icon-button {
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0;
   border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer;
 }
-#theme-toggle:hover { color: var(--text); }
-#theme-toggle svg { width: 16px; height: 16px; }
+.icon-button:hover { color: var(--text); }
+.icon-button svg { width: 16px; height: 16px; }
+#panel-toggle svg { transition: transform 0.15s; }
+
+/* Collapsed: title, a one-line summary, and the short data notice the feed terms require. */
+.summary, .mini-disclaimer { display: none; }
+#panel.collapsed #panel-body { display: none; }
+#panel.collapsed .summary { display: block; margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+#panel.collapsed .mini-disclaimer { display: block; margin: 6px 0 0; color: var(--muted); font-size: 10px; }
+#panel.collapsed #panel-toggle svg { transform: rotate(180deg); }
+.disclaimer a { color: var(--accent); }
 :root[data-theme="light"] .icon-sun, :root:not([data-theme="light"]) .icon-moon { display: none; }
 .sub { margin: 4px 0 12px; color: var(--muted); font-size: 12px; }
 
