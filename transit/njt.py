@@ -23,6 +23,7 @@ RAIL_BASE = "https://raildata.njtransit.com/api/TrainData/"
 BUS_BASE = "https://pcsdata.njtransit.com/api/GTFS/"
 USER_AGENT = "greater-ny-transit/0.1"
 LOGIN_COOLDOWN_S = 15 * 60
+LOGIN_TIMEOUT_S = 25
 
 
 class NjtAuthError(RuntimeError):
@@ -106,10 +107,15 @@ def _login_request(api: Api) -> tuple[str, dict]:
 
 
 def _parse_login(resp: httpx.Response) -> str:
-    resp.raise_for_status()
-    body = resp.json()
-    if str(body.get("Authenticated")).lower() != "true" or not body.get("UserToken"):
-        raise NjtAuthError(f"login rejected: {body.get('errorMessage') or body.get('Authenticated')}")
+    # NJT reports failures as HTTP 500 with {"errorMessage": ...}; surface that message.
+    try:
+        body = resp.json()
+    except ValueError:
+        resp.raise_for_status()
+        raise NjtAuthError(f"login: unexpected response ({resp.status_code})")
+    if not isinstance(body, dict) or str(body.get("Authenticated")).lower() != "true" or not body.get("UserToken"):
+        detail = body.get("errorMessage") or body.get("Authenticated") if isinstance(body, dict) else body
+        raise NjtAuthError(f"login rejected (HTTP {resp.status_code}): {detail}")
     return body["UserToken"]
 
 
@@ -130,12 +136,15 @@ class NjtClient:
     def _cached_token(self, api: Api) -> str | None:
         return self.store.get(api).get("token")
 
-    def _may_login(self, api: Api) -> bool:
-        return time.time() - self.store.get(api).get("last_login_attempt", 0) > LOGIN_COOLDOWN_S
+    def _check_cooldown(self, api: Api) -> None:
+        entry = self.store.get(api)
+        if time.time() - entry.get("last_login_attempt", 0) <= LOGIN_COOLDOWN_S:
+            raise NjtAuthError(f"{api}: login on cooldown; last login error: {entry.get('last_login_error')}")
 
-    def _record_attempt(self, api: Api, token: str | None) -> None:
+    def _record_attempt(self, api: Api, token: str | None, error: str | None = None) -> None:
         entry = self.store.get(api)
         entry["last_login_attempt"] = int(time.time())
+        entry["last_login_error"] = error
         if token:
             entry.update(token=token, obtained_at=int(time.time()))
         self.store.set(api, entry)
@@ -143,14 +152,18 @@ class NjtClient:
     # --- async (API functions) ---
 
     async def _login_async(self, client: httpx.AsyncClient, api: Api) -> str:
-        if not self._may_login(api):
-            raise NjtAuthError(f"{api}: login on cooldown (token invalid or missing)")
+        self._check_cooldown(api)
         url, kwargs = _login_request(api)
-        token = None
         try:
-            token = _parse_login(await client.post(url, headers={"User-Agent": USER_AGENT}, **kwargs))
-        finally:
-            self._record_attempt(api, token)
+            # Generous timeout: a failed login costs one of RailData's ~5 daily tokens' worth of retries.
+            resp = await client.post(url, headers={"User-Agent": USER_AGENT}, timeout=LOGIN_TIMEOUT_S, **kwargs)
+            token = _parse_login(resp)
+        except Exception as e:
+            error = f"{type(e).__name__}: {e}"
+            print(f"NJT {api} login failed: {error}")  # shows in Vercel runtime logs
+            self._record_attempt(api, None, error)
+            raise
+        self._record_attempt(api, token)
         return token
 
     async def post(self, client: httpx.AsyncClient, api: Api, method: str) -> httpx.Response:
@@ -174,13 +187,14 @@ class NjtClient:
             token = self._cached_token(api)
             for attempt in range(2):
                 if token is None:
-                    if not self._may_login(api):
-                        raise NjtAuthError(f"{api}: login on cooldown")
+                    self._check_cooldown(api)
                     url, kwargs = _login_request(api)
                     try:
                         token = _parse_login(client.post(url, **kwargs))
-                    finally:
-                        self._record_attempt(api, token)
+                    except Exception as e:
+                        self._record_attempt(api, None, f"{type(e).__name__}: {e}")
+                        raise
+                    self._record_attempt(api, token)
                 resp = client.post(base + method, files={"token": (None, token)})
                 if not _is_invalid_token(resp):
                     resp.raise_for_status()

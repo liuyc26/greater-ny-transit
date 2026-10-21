@@ -107,6 +107,26 @@ def test_default_store_uses_redis_only_when_configured(monkeypatch):
     assert isinstance(default_store(), RedisTokenStore)
 
 
+def test_login_error_is_recorded_and_shown_during_cooldown(tmp_path, monkeypatch):
+    import asyncio
+    monkeypatch.setenv("NJT_USERNAME", "u")
+    monkeypatch.setenv("NJT_PASSWORD", "p")
+    store = FileTokenStore(tmp_path / "tokens.json")
+    njt = NjtClient(store)
+    # NJT's style of failure: HTTP 500 with an errorMessage body.
+    transport = httpx.MockTransport(lambda req: httpx.Response(500, json={"errorMessage": "Token limit reached."}))
+
+    async def call():
+        async with httpx.AsyncClient(transport=transport) as client:
+            return await njt.post(client, "rail", "getVehicleData")
+
+    with pytest.raises(NjtAuthError, match="Token limit reached"):
+        asyncio.run(call())
+    assert "Token limit reached" in store.get("rail")["last_login_error"]
+    with pytest.raises(NjtAuthError, match="cooldown.*Token limit reached"):
+        asyncio.run(call())
+
+
 def test_login_cooldown_prevents_repeated_logins(tmp_path, monkeypatch):
     store = FileTokenStore(tmp_path / "tokens.json")
     store.set("rail", {"last_login_attempt": int(time.time())})
