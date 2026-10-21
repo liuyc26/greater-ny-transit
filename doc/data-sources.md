@@ -9,7 +9,7 @@ All findings verified against live feeds on 2026-10-18.
 | LIRR | `https://rrgtfsfeeds.s3.amazonaws.com/gtfslirr.zip` | GTFS-RT `https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/lirr%2Fgtfs-lirr` | no | `trip_id` = static `trip_id` |
 | Metro-North | `https://rrgtfsfeeds.s3.amazonaws.com/gtfsmnr.zip` | GTFS-RT `https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/mnr%2Fgtfs-mnr` | no | `trip_id` = static `trip_short_name` (train number) |
 | NJ Transit Rail | `https://www.njtransit.com/rail_data.zip` (public) | `POST https://raildata.njtransit.com/api/TrainData/getVehicleData` (JSON) | yes | `ID` = static `block_id` (train number) |
-| NJ Transit Bus | `https://www.njtransit.com/bus_data.zip` (public) | GTFS-RT `POST https://pcsdata.njtransit.com/api/GTFS/getVehiclePositions` | yes | `route_id` + `start_time` = static `route_short_name` + first departure |
+| NJ Transit Bus | `https://www.njtransit.com/bus_data.zip` (public) | GTFS-RT `POST https://pcsdata.njtransit.com/api/GTFSG2/getVehiclePositions` (fallback: `/api/GTFS/`) | yes | `route_id` + `start_time` = static `route_short_name` + first departure |
 
 Also used at build time: Manhattan boundary from NYC Open Data
 (`https://data.cityofnewyork.us/resource/gthc-hcne.geojson`, cached in `data/manhattan.geojson`), and
@@ -44,7 +44,10 @@ road geometry from the OSRM public server (`router.project-osrm.org`, cached in 
 
 ### NJ Transit Bus
 - Login: `POST authenticateUser` (form `username`, `password`); data calls are multipart POSTs with `token`.
-- **About half of `getVehiclePositions` calls return a stale snapshot days old.** A kept-alive connection
+- **Use `/api/GTFSG2/`, not `/api/GTFS/`.** On 2026-10-21 the original `/api/GTFS/` endpoints returned 404
+  "Feed file not found" all afternoon, while `/api/GTFSG2/` (same token) served fresh data with no stale
+  snapshots. The adapter tries GTFSG2 first and falls back to GTFS.
+- **On `/api/GTFS/`, about half of `getVehiclePositions` calls returned a stale snapshot days old.** A kept-alive connection
   tends to stick to it. The adapter retries up to 4 times on fresh connections until the header timestamp
   is under 5 minutes old (~1.9 calls per poll on average).
 - **Realtime trip_ids match neither the public `bus_data.zip` nor the API's `getGTFS` zip.** (The API zip's

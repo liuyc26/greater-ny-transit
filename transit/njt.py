@@ -206,8 +206,8 @@ class NjtClient:
         self._record_attempt(api, token)
         return token
 
-    async def post(self, client: httpx.AsyncClient, api: Api, method: str) -> httpx.Response:
-        base = RAIL_BASE if api == "rail" else BUS_BASE
+    async def post(self, client: httpx.AsyncClient, api: Api, method: str, base: str | None = None) -> httpx.Response:
+        base = base or (RAIL_BASE if api == "rail" else BUS_BASE)
         token = self._cached_token(api) or await self._login_async(client, api)
         for attempt in range(2):
             resp = await client.post(base + method, headers={"User-Agent": USER_AGENT},

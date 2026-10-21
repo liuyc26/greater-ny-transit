@@ -181,13 +181,20 @@ def _feed_bytes(ts: int) -> bytes:
 
 
 class FakeNjt:
-    def __init__(self, timestamps):
-        self.timestamps = list(timestamps)
-        self.calls = 0
+    """Responses per call: a timestamp (feed with that header time) or an int HTTP error status."""
 
-    async def post(self, client, api, method):
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls, self.bases = 0, []
+
+    async def post(self, client, api, method, base=None):
         self.calls += 1
-        return httpx.Response(200, content=_feed_bytes(self.timestamps.pop(0)))
+        self.bases.append(base)
+        r = self.responses.pop(0)
+        if isinstance(r, tuple):  # ("error", status)
+            resp = httpx.Response(r[1], text="Feed file not found", request=httpx.Request("POST", base + method))
+            resp.raise_for_status()
+        return httpx.Response(200, content=_feed_bytes(r))
 
 
 async def _download(adapter):
@@ -206,10 +213,20 @@ def test_bus_retries_past_stale_snapshots():
     assert f.header.timestamp == now - 5
 
 
-def test_bus_gives_up_when_always_stale():
+def test_bus_gives_up_when_every_endpoint_is_stale():
     import asyncio
     stale = int(time.time()) - 10 * 86400
-    fake = FakeNjt([stale] * njt_bus.MAX_ATTEMPTS)
+    n = njt_bus.MAX_ATTEMPTS * len(njt_bus.FEED_BASES)
+    fake = FakeNjt([stale] * n)
     with pytest.raises(StaleFeedError):
         asyncio.run(_download(NjtBusAdapter(agency="njt_bus", njt=fake)))
-    assert fake.calls == njt_bus.MAX_ATTEMPTS
+    assert fake.calls == n
+
+
+def test_bus_falls_back_to_next_endpoint_on_404():
+    # 2026-10-21: the original GTFS endpoint returned 404 "Feed file not found" all afternoon.
+    import asyncio
+    now = int(time.time())
+    fake = FakeNjt([("error", 404), now - 5])
+    asyncio.run(_download(NjtBusAdapter(agency="njt_bus", njt=fake)))
+    assert fake.bases == list(njt_bus.FEED_BASES[:2])
