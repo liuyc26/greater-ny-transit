@@ -69,5 +69,16 @@
     <p class="mini-disclaimer">Data may not be real time · not affiliated with the MTA or NJ TRANSIT</p>
   </aside>
   <script type="module" src="app.js"></script>
+  <!-- Vercel Web Analytics (cookieless page views; free on Hobby up to 50K events/month). The script
+       is served by Vercel once Analytics is enabled for the project; skipped in local dev. -->
+  <script>
+    if (!/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+      const s = document.createElement("script");
+      s.defer = true;
+      s.src = "/_vercel/insights/script.js";
+      document.head.appendChild(s);
+    }
+  </script>
 </body>
 </html>
