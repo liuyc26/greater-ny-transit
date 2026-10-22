@@ -1,13 +1,13 @@
 {
-  "built_at": 1792588735,
+  "built_at": 1792675065,
   "agencies": {
     "lirr": {
       "name": "Long Island Rail Road",
-      "trips_total": 2291,
-      "trips_qualifying": 1581,
+      "trips_total": 2333,
+      "trips_qualifying": 1583,
       "directions": {
-        "inbound": 794,
-        "outbound": 787
+        "inbound": 788,
+        "outbound": 795
       },
       "routes": 11,
       "stops": 117,
@@ -15,15 +15,15 @@
       "distinct_shapes": 76,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1792588715
+      "built_at": 1792675041
     },
     "mnr": {
       "name": "Metro-North Railroad",
-      "trips_total": 37222,
-      "trips_qualifying": 29653,
+      "trips_total": 37225,
+      "trips_qualifying": 29656,
       "directions": {
         "inbound": 14706,
-        "outbound": 14947
+        "outbound": 14950
       },
       "routes": 5,
       "stops": 106,
@@ -31,39 +31,39 @@
       "distinct_shapes": 10,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1792588717
+      "built_at": 1792675043
     },
     "njt_rail": {
       "name": "NJ Transit Rail",
-      "trips_total": 771,
-      "trips_qualifying": 575,
+      "trips_total": 772,
+      "trips_qualifying": 576,
       "directions": {
         "inbound": 286,
-        "outbound": 289
+        "outbound": 290
       },
       "routes": 9,
       "stops": 134,
-      "shapes": 575,
+      "shapes": 576,
       "distinct_shapes": 92,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1792588720
+      "built_at": 1792675047
     },
     "njt_bus": {
       "name": "NJ Transit Bus",
-      "trips_total": 16083,
-      "trips_qualifying": 5709,
+      "trips_total": 16113,
+      "trips_qualifying": 5738,
       "directions": {
-        "inbound": 2955,
-        "outbound": 2754
+        "inbound": 2961,
+        "outbound": 2777
       },
       "routes": 76,
       "stops": 4999,
-      "shapes": 766,
+      "shapes": 777,
       "distinct_shapes": 523,
-      "ambiguous_keys": 539,
+      "ambiguous_keys": 559,
       "trips_missing_shape": 0,
-      "built_at": 1792588735
+      "built_at": 1792675065
     }
   }
 }
