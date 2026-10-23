@@ -1,5 +1,5 @@
 {
-  "built_at": 1792675065,
+  "built_at": 1792760254,
   "agencies": {
     "lirr": {
       "name": "Long Island Rail Road",
@@ -15,15 +15,15 @@
       "distinct_shapes": 76,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1792675041
+      "built_at": 1792760233
     },
     "mnr": {
       "name": "Metro-North Railroad",
-      "trips_total": 37225,
-      "trips_qualifying": 29656,
+      "trips_total": 36013,
+      "trips_qualifying": 28600,
       "directions": {
-        "inbound": 14706,
-        "outbound": 14950
+        "inbound": 14180,
+        "outbound": 14420
       },
       "routes": 5,
       "stops": 106,
@@ -31,39 +31,39 @@
       "distinct_shapes": 10,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1792675043
+      "built_at": 1792760236
     },
     "njt_rail": {
       "name": "NJ Transit Rail",
-      "trips_total": 772,
-      "trips_qualifying": 576,
+      "trips_total": 1264,
+      "trips_qualifying": 884,
       "directions": {
-        "inbound": 286,
-        "outbound": 290
+        "inbound": 437,
+        "outbound": 447
       },
       "routes": 9,
       "stops": 134,
-      "shapes": 576,
-      "distinct_shapes": 92,
+      "shapes": 884,
+      "distinct_shapes": 98,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1792675047
+      "built_at": 1792760240
     },
     "njt_bus": {
       "name": "NJ Transit Bus",
-      "trips_total": 16113,
-      "trips_qualifying": 5738,
+      "trips_total": 26004,
+      "trips_qualifying": 8587,
       "directions": {
-        "inbound": 2961,
-        "outbound": 2777
+        "inbound": 4386,
+        "outbound": 4201
       },
       "routes": 76,
       "stops": 4999,
-      "shapes": 777,
-      "distinct_shapes": 523,
-      "ambiguous_keys": 559,
+      "shapes": 982,
+      "distinct_shapes": 543,
+      "ambiguous_keys": 1433,
       "trips_missing_shape": 0,
-      "built_at": 1792675065
+      "built_at": 1792760254
     }
   }
 }
