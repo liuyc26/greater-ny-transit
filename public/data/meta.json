@@ -1,5 +1,5 @@
 {
-  "built_at": 1792760254,
+  "built_at": 1792844386,
   "agencies": {
     "lirr": {
       "name": "Long Island Rail Road",
@@ -15,15 +15,15 @@
       "distinct_shapes": 76,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1792760233
+      "built_at": 1792844363
     },
     "mnr": {
       "name": "Metro-North Railroad",
-      "trips_total": 36013,
-      "trips_qualifying": 28600,
+      "trips_total": 35960,
+      "trips_qualifying": 28547,
       "directions": {
-        "inbound": 14180,
-        "outbound": 14420
+        "inbound": 14165,
+        "outbound": 14382
       },
       "routes": 5,
       "stops": 106,
@@ -31,39 +31,39 @@
       "distinct_shapes": 10,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1792760236
+      "built_at": 1792844367
     },
     "njt_rail": {
       "name": "NJ Transit Rail",
-      "trips_total": 1264,
-      "trips_qualifying": 884,
+      "trips_total": 516,
+      "trips_qualifying": 309,
       "directions": {
-        "inbound": 437,
-        "outbound": 447
+        "inbound": 151,
+        "outbound": 158
       },
-      "routes": 9,
-      "stops": 134,
-      "shapes": 884,
-      "distinct_shapes": 98,
+      "routes": 7,
+      "stops": 97,
+      "shapes": 309,
+      "distinct_shapes": 27,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1792760240
+      "built_at": 1792844370
     },
     "njt_bus": {
       "name": "NJ Transit Bus",
-      "trips_total": 26004,
-      "trips_qualifying": 8587,
+      "trips_total": 17099,
+      "trips_qualifying": 5105,
       "directions": {
-        "inbound": 4386,
-        "outbound": 4201
+        "inbound": 2539,
+        "outbound": 2566
       },
-      "routes": 76,
-      "stops": 4999,
-      "shapes": 982,
-      "distinct_shapes": 543,
-      "ambiguous_keys": 1433,
+      "routes": 47,
+      "stops": 3804,
+      "shapes": 398,
+      "distinct_shapes": 207,
+      "ambiguous_keys": 1167,
       "trips_missing_shape": 0,
-      "built_at": 1792760254
+      "built_at": 1792844386
     }
   }
 }
