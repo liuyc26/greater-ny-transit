@@ -1,5 +1,5 @@
 {
-  "built_at": 1793198459,
+  "built_at": 1793285121,
   "agencies": {
     "lirr": {
       "name": "Long Island Rail Road",
@@ -15,15 +15,15 @@
       "distinct_shapes": 79,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1793198433
+      "built_at": 1793285095
     },
     "mnr": {
       "name": "Metro-North Railroad",
-      "trips_total": 36154,
-      "trips_qualifying": 28739,
+      "trips_total": 36191,
+      "trips_qualifying": 28776,
       "directions": {
-        "inbound": 14260,
-        "outbound": 14479
+        "inbound": 14277,
+        "outbound": 14499
       },
       "routes": 5,
       "stops": 106,
@@ -31,39 +31,39 @@
       "distinct_shapes": 10,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1793198437
+      "built_at": 1793285098
     },
     "njt_rail": {
       "name": "NJ Transit Rail",
-      "trips_total": 771,
-      "trips_qualifying": 575,
+      "trips_total": 772,
+      "trips_qualifying": 576,
       "directions": {
         "inbound": 286,
-        "outbound": 289
+        "outbound": 290
       },
       "routes": 9,
       "stops": 136,
-      "shapes": 575,
+      "shapes": 576,
       "distinct_shapes": 92,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1793198441
+      "built_at": 1793285102
     },
     "njt_bus": {
       "name": "NJ Transit Bus",
-      "trips_total": 16083,
-      "trips_qualifying": 5709,
+      "trips_total": 16113,
+      "trips_qualifying": 5738,
       "directions": {
-        "inbound": 2955,
-        "outbound": 2754
+        "inbound": 2961,
+        "outbound": 2777
       },
       "routes": 76,
       "stops": 4999,
-      "shapes": 766,
+      "shapes": 777,
       "distinct_shapes": 523,
-      "ambiguous_keys": 539,
+      "ambiguous_keys": 559,
       "trips_missing_shape": 0,
-      "built_at": 1793198459
+      "built_at": 1793285121
     }
   }
 }
