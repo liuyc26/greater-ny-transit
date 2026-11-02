@@ -1,5 +1,5 @@
 {
-  "built_at": 1793543789,
+  "built_at": 1793640815,
   "agencies": {
     "lirr": {
       "name": "Long Island Rail Road",
@@ -15,15 +15,15 @@
       "distinct_shapes": 79,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1793543764
+      "built_at": 1793640792
     },
     "mnr": {
       "name": "Metro-North Railroad",
-      "trips_total": 35768,
-      "trips_qualifying": 28551,
+      "trips_total": 36375,
+      "trips_qualifying": 29152,
       "directions": {
-        "inbound": 14168,
-        "outbound": 14383
+        "inbound": 14459,
+        "outbound": 14693
       },
       "routes": 5,
       "stops": 106,
@@ -31,39 +31,39 @@
       "distinct_shapes": 10,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1793543767
+      "built_at": 1793640794
     },
     "njt_rail": {
       "name": "NJ Transit Rail",
-      "trips_total": 1265,
-      "trips_qualifying": 884,
+      "trips_total": 771,
+      "trips_qualifying": 575,
       "directions": {
-        "inbound": 437,
-        "outbound": 447
+        "inbound": 286,
+        "outbound": 289
       },
       "routes": 9,
       "stops": 136,
-      "shapes": 884,
-      "distinct_shapes": 98,
+      "shapes": 575,
+      "distinct_shapes": 92,
       "ambiguous_keys": 0,
       "trips_missing_shape": 0,
-      "built_at": 1793543771
+      "built_at": 1793640798
     },
     "njt_bus": {
       "name": "NJ Transit Bus",
-      "trips_total": 23268,
-      "trips_qualifying": 7943,
+      "trips_total": 16083,
+      "trips_qualifying": 5709,
       "directions": {
-        "inbound": 4062,
-        "outbound": 3881
+        "inbound": 2955,
+        "outbound": 2754
       },
       "routes": 76,
-      "stops": 5001,
-      "shapes": 947,
-      "distinct_shapes": 544,
-      "ambiguous_keys": 1262,
+      "stops": 4999,
+      "shapes": 766,
+      "distinct_shapes": 523,
+      "ambiguous_keys": 539,
       "trips_missing_shape": 0,
-      "built_at": 1793543789
+      "built_at": 1793640815
     }
   }
 }
